@@ -21,8 +21,8 @@ def cmd_exit():
     sys.exit(0)
 
 def cmd_list_jobs():
-    for i, job in enumerate(jobs):
-        print(f"  {i}:  {job.__dict__}")
+    for name, job in jobs.items():
+        print(f"  {name}:  {job.json()}")
 
 class AssistantAddJobException(Exception):
     pass
@@ -37,14 +37,14 @@ def cmd_add_job():
     name = input("  Name: ")
     path = input("  Path: ")
     params = input("  Params (opt): ") or None
-    is_active = input("  Is active? y/n: ")
+    is_active = input("  Is active? y/(n): ")
     is_active = True if is_active.lower() == "y" else False
 
-    is_input_correct = input("  Is input correct? Create this job? y/n: ")
+    is_input_correct = input("  Is input correct? Create this job? (y)/n: ")
 
-    if is_input_correct.lower() == "y":
+    if is_input_correct.lower() != "n":
         _add_job(name, path, params, is_active)
-        print(f"  Job {name} was added.")
+        print(f"  Job <{name}> was added.")
 
 def _jobs_config_json():
     cfg = {"jobs": {}}
@@ -53,15 +53,32 @@ def _jobs_config_json():
         cfg["jobs"].update({name: j_str})
     return cfg
 
-def cmd_dump_jobs():
-    print("  Dump jobs configuration to file (json format).")
+def cmd_save_jobs():
+    print("  Save jobs configuration to file (json format).")
     name = input("  Enter file name: ")
     if os.path.exists(name):
         print("  (!) File with this name already exists. Please pick another name.")
         return
     jobs_json = _jobs_config_json()
     with open(name, "wt") as f:
-        json.dump(jobs_json, f)
+        json.dump(jobs_json, f, indent=4)
+
+def _load_jobs(cfg):
+    for _, job_cfg in cfg["jobs"].items():
+        j = job.from_cfg(job_cfg)
+        jobs.update({j.name: j})
+
+def _load_job_from_file(name):
+    with open(name) as f:
+        cfg = json.load(f)
+    _load_jobs(cfg)
+
+def cmd_load_jobs_from_config():
+    name = input("  Config file path: ")
+    if not os.path.exists(name):
+        print(f"  File {name} doesn't exists.")
+        return
+    _load_job_from_file(name)
 
 commands = {
     "help": cmd_help,
@@ -69,8 +86,8 @@ commands = {
     "jobs": cmd_list_jobs,
     "j": cmd_list_jobs,
     "add job": cmd_add_job,
-    "dump jobs": cmd_dump_jobs,
-    # "load jobs": cmd_load_jobs_from_config,
+    "save jobs": cmd_save_jobs,
+    "load jobs": cmd_load_jobs_from_config,
 }
 
 def input_cmd():

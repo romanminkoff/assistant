@@ -23,6 +23,38 @@ def test_dump_jobs():
     assert len(cfg["jobs"]) == 1
     assert "A" in cfg["jobs"]
 
+def test_job_from_cfg():
+    cfg = {
+        "name": "A",
+        "path": "path",
+        "params": {
+            "whatever": 5
+        },
+        "is_active": False,
+        "schedule": [
+            {
+                "time": "15:34:00",
+                "interval": "day",
+                "interval_arg": "Friday"
+            },
+            {
+                "time": "04:01:05",
+                "interval": "daily",
+                "interval_arg": None
+            }
+        ]
+    }
+    j = job.from_cfg(cfg)
+    assert j.name == cfg["name"]
+    assert j.path == cfg["path"]
+    assert j.params == {"whatever": 5}
+    assert j.is_active == False
+    assert len(j.schedule) == 2
+    assert j.schedule[0].time_str() == "15:34:00"
+    assert j.schedule[1].time_str() == "04:01:05"
+    assert j.schedule[1].interval == Interval.daily
+    assert j.schedule[1].interval_arg == None
+
 ### job
 def test_job():
     j_default = job.Job(name="A", path="whatever")

@@ -5,3 +5,5 @@ class Job:
         self.path = path
         self.params = params
         self.is_active = is_active
+    def json(self):
+        return self.__dict__

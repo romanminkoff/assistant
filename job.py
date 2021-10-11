@@ -5,5 +5,8 @@ class Job:
         self.path = path
         self.params = params
         self.is_active = is_active
+        self.schedule = []
     def json(self):
-        return self.__dict__
+        r = self.__dict__
+        r["schedule"] = [s.json() for s in self.schedule]
+        return r

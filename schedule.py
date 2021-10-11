@@ -26,6 +26,8 @@ _intervals = {
 class ScheduleInitException(Exception):
     pass
 
+TIME_FMT = "%H:%M:%S"
+
 class Schedule:
     """Schedule time, interval and interval argument if needed."""
     def __init__(self, time: datetime.time, interval: str, interval_arg=None):
@@ -34,6 +36,12 @@ class Schedule:
         self.time = time
         self.interval = interval
         self.interval_arg = interval_arg
+    def time_str(self):
+        return self.time.strftime(TIME_FMT)
+    def json(self):
+        r = self.__dict__
+        r["time"] = self.time_str()
+        return r
 
 
 # schedule.every().day.at("00:00").do(job)  # returns job

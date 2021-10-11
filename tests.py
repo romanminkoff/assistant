@@ -41,7 +41,33 @@ def test_job_json():
         "name": "A",
         "path": "path",
         "params": params,
-        "is_active": False}
+        "is_active": False,
+        "schedule": []}
+
+def test_job_with_schedule_json():
+    j = job.Job("A", "path")
+    s0 = Schedule(datetime.time(16,45), Interval.day, interval_arg=Day.Friday)
+    s1 = Schedule(datetime.time(19,30,55), Interval.day, interval_arg=Day.Saturday)
+    j.schedule.extend([s0, s1])
+    ret = j.json()
+    assert ret == {
+        "name": "A",
+        "path": "path",
+        "params": None,
+        "is_active": False,
+        "schedule": [
+            {
+                "time": "16:45:00",
+                "interval": Interval.day,
+                "interval_arg": Day.Friday
+            },
+            {
+                "time": "19:30:55",
+                "interval": Interval.day,
+                "interval_arg": Day.Saturday
+            },
+        ]
+    }
 
 
 ### schedule
@@ -63,3 +89,11 @@ def test_schedule_day():
     assert s.interval_arg == Day.Friday
     with pytest.raises(ScheduleInitException):
         s = Schedule(datetime.time(11,1,1), Interval.day)
+
+def test_schedule_json():
+    s = Schedule(datetime.time(16,45), Interval.day, interval_arg=Day.Friday)
+    assert s.json() == {
+        "time": "16:45:00",
+        "interval": Interval.day,
+        "interval_arg": Day.Friday
+    }

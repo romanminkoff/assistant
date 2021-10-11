@@ -1,0 +1,65 @@
+import datetime
+import pytest
+
+import assistant
+import job
+from schedule import Schedule, Interval, Day, ScheduleInitException
+
+def teardown_function():
+    assistant.reset()
+
+
+### assistant
+def test_add_job():
+    assistant._add_job("A", "path", params=None, is_active=False)
+    assert len(assistant.jobs) == 1
+    assert "A" in assistant.jobs
+    with pytest.raises(assistant.AssistantAddJobException):
+        assistant._add_job("A", "path2", params=None, is_active=False)
+
+def test_dump_jobs():
+    assistant._add_job("A", "path", params=None, is_active=False)
+    cfg = assistant._jobs_config_json()
+    assert len(cfg["jobs"]) == 1
+    assert "A" in cfg["jobs"]
+
+### job
+def test_job():
+    j_default = job.Job(name="A", path="whatever")
+    assert j_default.params==None
+    assert j_default.is_active==False
+    j_with_params = job.Job("B", "path", params={"a": 4}, is_active=True)
+    assert j_with_params.name=="B"
+    assert j_with_params.path=="path"
+    assert j_with_params.params=={"a": 4}
+    assert j_with_params.is_active==True
+
+def test_job_json():
+    params = "{'a': 2}"
+    j = job.Job("A", "path", params, is_active=False)
+    assert j.json() == {
+        "name": "A",
+        "path": "path",
+        "params": params,
+        "is_active": False}
+
+
+### schedule
+def test_schedule_daily():
+    s = Schedule(datetime.time(4,4,4), Interval.daily)
+    assert s.interval == Interval.daily
+    with pytest.raises(ScheduleInitException):
+        s = Schedule(datetime.time(11,1,1), Interval.daily, interval_arg="a")
+
+def test_schedule_workday():
+    s = Schedule(datetime.time(4,4,4), Interval.workday)
+    assert s.interval == Interval.workday
+    with pytest.raises(ScheduleInitException):
+        s = Schedule(datetime.time(11,1,1), Interval.workday, interval_arg="a")
+
+def test_schedule_day():
+    s = Schedule(datetime.time(4,4,4), Interval.day, interval_arg=Day.Friday)
+    assert s.interval == Interval.day
+    assert s.interval_arg == Day.Friday
+    with pytest.raises(ScheduleInitException):
+        s = Schedule(datetime.time(11,1,1), Interval.day)

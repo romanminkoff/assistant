@@ -4,6 +4,9 @@ class Interval:
     daily = "daily"
     workday = "workday"
     day = "day"
+    @staticmethod
+    def list():
+        return ["daily", "workday", "day"]
 
 class Day:
     Sunday = "Sunday"
@@ -14,13 +17,14 @@ class Day:
     Friday = "Friday"
     Saturday = "Saturday"
     @staticmethod
-    def days():
-        return Day.__dict__
+    def list():
+        return ["Sunday", "Monday", "Tuesday", "Wednesday",
+                "Thursday", "Friday", "Saturday"]
 
 _intervals = {
-    Interval.daily: [None],
-    Interval.workday: [None],
-    Interval.day: Day.days(),
+    Interval.daily: [],
+    Interval.workday: [],
+    Interval.day: Day.list()
 }
 
 class ScheduleInitException(Exception):
@@ -31,15 +35,21 @@ TIME_FMT = "%H:%M:%S"
 class Schedule:
     """Schedule time, interval and interval argument if needed."""
     def __init__(self, time: datetime.time, interval: str, interval_arg=None):
-        if not interval_arg in _intervals[interval]:
-            raise ScheduleInitException("Incorrect interval settings.")
+        if _intervals[interval]:
+            if not interval_arg in _intervals[interval]:
+                raise ScheduleInitException("Incorrect interval argument.")
+        else:
+            if interval_arg:
+                raise ScheduleInitException("Incorrect interval argument.")
+        if not isinstance(time, datetime.time):
+            raise ScheduleInitException("Time must be datetime.time")
         self.time = time
         self.interval = interval
         self.interval_arg = interval_arg
     def time_str(self):
         return self.time.strftime(TIME_FMT)
     def json(self):
-        r = self.__dict__
+        r = self.__dict__.copy()
         r["time"] = self.time_str()
         return r
 

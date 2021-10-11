@@ -1,8 +1,10 @@
+from datetime import datetime
 import json
 import os
 import sys
 
 import job
+import schedule
 
 EXCEPTIONS_LIMIT = 5
 INPUT_CHAR = "> "
@@ -39,9 +41,7 @@ def cmd_add_job():
     params = input("  Params (opt): ") or None
     is_active = input("  Is active? y/(n): ")
     is_active = True if is_active.lower() == "y" else False
-
     is_input_correct = input("  Is input correct? Create this job? (y)/n: ")
-
     if is_input_correct.lower() != "n":
         _add_job(name, path, params, is_active)
         print(f"  Job <{name}> was added.")
@@ -80,6 +80,28 @@ def cmd_load_jobs_from_config():
         return
     _load_job_from_file(name)
 
+def cmd_schedule_job():
+    name = input("  Job name: ")
+    if not name in jobs:
+        print(f"  Job <{name}> doesn't exists.")
+        return
+    t = input(f"  Time ({schedule.TIME_FMT}): ")
+    t = datetime.strptime(t, schedule.TIME_FMT).time()
+    _i_options = schedule.Interval.list()
+    interval = input(f"  Interval ({_i_options}): ")
+    if not interval in _i_options:
+        print(f"  Incorrect interval ({interval})")
+        return
+    interval_arg = None
+    if _a_options := schedule._intervals[interval]:
+        interval_arg = input(f"  Interval argument ({_a_options}): ")
+        if not interval_arg in _a_options:
+            print(f"  Incorrect argument ({interval_arg})")
+            return
+    s = schedule.Schedule(t, interval, interval_arg)
+    jobs[name].schedule.append(s)
+    print("  Job schedule was updated.")
+
 commands = {
     "help": cmd_help,
     "q": cmd_exit,
@@ -88,6 +110,7 @@ commands = {
     "add job": cmd_add_job,
     "save jobs": cmd_save_jobs,
     "load jobs": cmd_load_jobs_from_config,
+    "schedule job": cmd_schedule_job,
 }
 
 def input_cmd():

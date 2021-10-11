@@ -3,7 +3,7 @@ import pytest
 
 import assistant
 import job
-from schedule import Schedule, Interval, Day, ScheduleInitException
+from schedule import Schedule, Interval, Day, ScheduleInitException, _intervals
 
 def teardown_function():
     assistant.reset()
@@ -116,16 +116,24 @@ def test_schedule_workday():
         s = Schedule(datetime.time(11,1,1), Interval.workday, interval_arg="a")
 
 def test_schedule_day():
-    s = Schedule(datetime.time(4,4,4), Interval.day, interval_arg=Day.Friday)
+    s = Schedule(datetime.time(4,4,4), Interval.day, Day.Friday)
     assert s.interval == Interval.day
     assert s.interval_arg == Day.Friday
     with pytest.raises(ScheduleInitException):
         s = Schedule(datetime.time(11,1,1), Interval.day)
 
 def test_schedule_json():
-    s = Schedule(datetime.time(16,45), Interval.day, interval_arg=Day.Friday)
+    s = Schedule(datetime.time(16,45), Interval.day, Day.Friday)
     assert s.json() == {
         "time": "16:45:00",
         "interval": Interval.day,
         "interval_arg": Day.Friday
     }
+
+def test_schedule_intervals():
+    assert len(_intervals[Interval.day]) == 7
+    assert Day.Sunday in _intervals[Interval.day]
+
+def test_schedule_raise_on_incorrect_time():
+    with pytest.raises(ScheduleInitException):
+        Schedule("11:20:00", Interval.daily)

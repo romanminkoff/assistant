@@ -1,19 +1,27 @@
 from datetime import datetime
 
-from schedule import Schedule, TIME_FMT
+from scheduler import Schedule, TIME_FMT
 
 
 class Job:
     def __init__(self, name, path, params=None, is_active=False):
         self.name = name
         self.path = path
-        self.params = params
+        self.params: dict = params
         self.is_active = is_active
         self.schedule = []
+    def schedule_json(self):
+        return [s.json() for s in self.schedule]
     def json(self):
         r = self.__dict__.copy()
-        r["schedule"] = [s.json() for s in self.schedule]
+        r["schedule"] = self.schedule_json()
         return r
+    def params_list(self):
+        if self.params:
+            lst = []
+            for k, v in self.params.items():
+                lst.extend([str(k), str(v)])
+            return lst
 
 def from_cfg(cfg_dict):
     c = cfg_dict

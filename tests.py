@@ -3,23 +3,23 @@ import pytest
 
 import assistant
 import job
-from schedule import Schedule, Interval, Day, ScheduleInitException, _intervals
-
-def teardown_function():
-    assistant.reset()
+from scheduler import Schedule, Scheduler, Interval, Day, Event
+from scheduler import ScheduleInitException, _intervals
 
 
 ### assistant
 def test_add_job():
-    assistant._add_job("A", "path", params=None, is_active=False)
-    assert len(assistant.jobs) == 1
-    assert "A" in assistant.jobs
+    jm = assistant.JobManager()
+    jm.add_job("A", "path", params=None, is_active=False)
+    assert len(jm.jobs) == 1
+    assert "A" in jm.jobs
     with pytest.raises(assistant.AssistantAddJobException):
-        assistant._add_job("A", "path2", params=None, is_active=False)
+        jm.add_job("A", "path2", params=None, is_active=False)
 
 def test_dump_jobs():
-    assistant._add_job("A", "path", params=None, is_active=False)
-    cfg = assistant._jobs_config_json()
+    jm = assistant.JobManager()
+    jm.add_job("A", "path", params=None, is_active=False)
+    cfg = jm.jobs_json()
     assert len(cfg["jobs"]) == 1
     assert "A" in cfg["jobs"]
 
@@ -34,7 +34,7 @@ def test_job_from_cfg():
         "schedule": [
             {
                 "time": "15:34:00",
-                "interval": "day",
+                "interval": "weekday",
                 "interval_arg": "Friday"
             },
             {
@@ -78,8 +78,8 @@ def test_job_json():
 
 def test_job_with_schedule_json():
     j = job.Job("A", "path")
-    s0 = Schedule(datetime.time(16,45), Interval.day, interval_arg=Day.Friday)
-    s1 = Schedule(datetime.time(19,30,55), Interval.day, interval_arg=Day.Saturday)
+    s0 = Schedule(datetime.time(16,45), Interval.weekday, interval_arg=Day.Friday)
+    s1 = Schedule(datetime.time(19,30,55), Interval.weekday, interval_arg=Day.Saturday)
     j.schedule.extend([s0, s1])
     ret = j.json()
     assert ret == {
@@ -90,17 +90,20 @@ def test_job_with_schedule_json():
         "schedule": [
             {
                 "time": "16:45:00",
-                "interval": Interval.day,
+                "interval": Interval.weekday,
                 "interval_arg": Day.Friday
             },
             {
                 "time": "19:30:55",
-                "interval": Interval.day,
+                "interval": Interval.weekday,
                 "interval_arg": Day.Saturday
             },
         ]
     }
 
+def test_job_params_list():
+    j = job.Job("a", "", params={"a": 1, "b": "bb"})
+    assert j.params_list() == ["a", "1", "b", "bb"]
 
 ### schedule
 def test_schedule_daily():
@@ -110,30 +113,52 @@ def test_schedule_daily():
         s = Schedule(datetime.time(11,1,1), Interval.daily, interval_arg="a")
 
 def test_schedule_workday():
-    s = Schedule(datetime.time(4,4,4), Interval.workday)
-    assert s.interval == Interval.workday
+    s = Schedule(datetime.time(4,4,4), Interval.workdays)
+    assert s.interval == Interval.workdays
     with pytest.raises(ScheduleInitException):
-        s = Schedule(datetime.time(11,1,1), Interval.workday, interval_arg="a")
+        s = Schedule(datetime.time(11,1,1), Interval.workdays, interval_arg="a")
 
 def test_schedule_day():
-    s = Schedule(datetime.time(4,4,4), Interval.day, Day.Friday)
-    assert s.interval == Interval.day
+    s = Schedule(datetime.time(4,4,4), Interval.weekday, Day.Friday)
+    assert s.interval == Interval.weekday
     assert s.interval_arg == Day.Friday
     with pytest.raises(ScheduleInitException):
-        s = Schedule(datetime.time(11,1,1), Interval.day)
+        s = Schedule(datetime.time(11,1,1), Interval.weekday)
 
 def test_schedule_json():
-    s = Schedule(datetime.time(16,45), Interval.day, Day.Friday)
+    s = Schedule(datetime.time(16,45), Interval.weekday, Day.Friday)
     assert s.json() == {
         "time": "16:45:00",
-        "interval": Interval.day,
+        "interval": Interval.weekday,
         "interval_arg": Day.Friday
     }
 
 def test_schedule_intervals():
-    assert len(_intervals[Interval.day]) == 7
-    assert Day.Sunday in _intervals[Interval.day]
+    assert len(_intervals[Interval.weekday]) == 7
+    assert Day.Sunday in _intervals[Interval.weekday]
 
 def test_schedule_raise_on_incorrect_time():
     with pytest.raises(ScheduleInitException):
         Schedule("11:20:00", Interval.daily)
+
+def _test_runner(a, b):
+    pass
+
+def test_scheduler_flow():
+    s = Scheduler(_test_runner, None)
+    t = datetime.datetime.now() + datetime.timedelta(seconds=10)
+    t1 = t.time()
+    s.schedule_event(Event(name="TestEvent", schedule=Schedule(t1, "daily")))
+    assert len(s._s.jobs) == 1
+    assert s._s.jobs[0].next_run.second == t.second
+    assert s._s.jobs[0].next_run.minute == t.minute
+    assert len(s.jobs) == 1
+    assert "TestEvent" in s.jobs
+    t2 = (t + datetime.timedelta(seconds=20)).time()
+    s.schedule_event(Event(name="TestEvent", schedule=Schedule(t2, "daily")))
+    assert len(s.jobs) == 1
+    assert len(s.jobs["TestEvent"]) == 2
+    assert len(s._s.jobs) == 2
+    s.cancel_events("TestEvent")
+    assert len(s._s.jobs) == 0
+    assert len(s.jobs) == 0

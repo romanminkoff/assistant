@@ -37,8 +37,8 @@ def _settings(fname=SETTINGS_FILE):
     with open(path) as f:
         return json.load(f)
 
-def _job_runner(jm, name):
-    j: job.Job = jm.jobs.get(name)
+def _job_runner(a, name):
+    j: job.Job = a.jobs.get(name)
     cmd = ["start", "cmd", "/C", "python"]
     cmd.append(j.path)
     if j.params:
@@ -46,7 +46,7 @@ def _job_runner(jm, name):
     print(f"  Launching scheduled job: {' '.join(cmd)}")
     subprocess.Popen(cmd, shell=True)
 
-class JobManager:
+class Assistant:
     def __init__(self):
         self.jobs = {}
         self.scheduler = scheduler.Scheduler(_job_runner, runner_arg=self)
@@ -83,18 +83,18 @@ class JobManager:
 def print_available_commands():
     print(f"Available commands: {list(commands.keys())}")
 
-def cmd_help(jm):
+def cmd_help(a):
     print("Usage: enter command.")
     print_available_commands()
 
-def cmd_exit(jm):
+def cmd_exit(a):
     print("Have a nice day!")
     sys.exit(0)
 
-def cmd_list_jobs(jm):
-    jm.pprint_jobs()
+def cmd_list_jobs(a):
+    a.pprint_jobs()
 
-def cmd_add_job(jm):
+def cmd_add_job(a):
     name = input("  Name: ")
     path = input("  Path: ")
     params = input("  Params (opt): ") or None
@@ -102,39 +102,39 @@ def cmd_add_job(jm):
     is_active = True if is_active.lower() == "y" else False
     is_input_correct = input("  Is input correct? Create this job? [y]/n: ")
     if is_input_correct.lower() != "n":
-        jm.add_job(name, path, params, is_active)
+        a.add_job(name, path, params, is_active)
         print(f"  Job <{name}> was added.")
 
-def cmd_save_jobs(jm):
+def cmd_save_jobs(a):
     print("  Save jobs configuration to file in json format.")
     name = input("  Enter file name: ")
     if os.path.exists(name):
         print("  (!) File with this name already exists. Please pick another name.")
         return
-    jobs_json = jm.jobs_json()
+    jobs_json = a.jobs_json()
     with open(name, "wt") as f:
         json.dump(jobs_json, f, indent=4)
     print(f"  File <name> was created.")
 
-def _load_jobs(jm, cfg):
+def _load_jobs(a, cfg):
     for _, job_cfg in cfg["jobs"].items():
-        jm.add_job_from_json(job_cfg)
+        a.add_job_from_json(job_cfg)
 
-def _load_jobs_from_file(jm, name):
+def _load_jobs_from_file(a, name):
     with open(name) as f:
         cfg = json.load(f)
-    _load_jobs(jm, cfg)
+    _load_jobs(a, cfg)
 
-def cmd_load_jobs_from_config(jm):
+def cmd_load_jobs_from_config(a):
     fname = input("  Config file path: ")
     if not os.path.exists(fname):
         print(f"  File {fname} doesn't exists.")
         return
-    _load_jobs_from_file(jm, fname)
+    _load_jobs_from_file(a, fname)
 
-def cmd_schedule_job(jm: JobManager):
+def cmd_schedule_job(a: Assistant):
     name = input("  Job name: ")
-    if not name in jm.jobs:
+    if not name in a.jobs:
         print(f"  Job <{name}> doesn't exists.")
         return
     t = input(f"  Time ({scheduler.TIME_FMT}): ")
@@ -151,10 +151,10 @@ def cmd_schedule_job(jm: JobManager):
             print(f"  Incorrect argument ({interval_arg})")
             return
     s = scheduler.Schedule(t, interval, interval_arg)
-    jm.jobs[name].schedule.append(s)
+    a.jobs[name].schedule.append(s)
     print("  Job schedule was updated.")
-    jm.reschedule_job(name)
-    print(f"  Job was rescheduled ({jm.jobs[name].schedule_json()})")
+    a.reschedule_job(name)
+    print(f"  Job was rescheduled ({a.jobs[name].schedule_json()})")
 
 commands = {
     "help": cmd_help,
@@ -176,12 +176,12 @@ def input_cmd():
         return cmd_help
 
 def main():
-    jm = JobManager()
+    a = Assistant()
     attempts_to_continue = 0
     while(attempts_to_continue < EXCEPTIONS_LIMIT):
         try:
             cmd = input_cmd()
-            cmd(jm)
+            cmd(a)
         except KeyboardInterrupt:
             cmd_exit()
         except SystemExit:

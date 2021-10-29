@@ -9,17 +9,17 @@ from scheduler import ScheduleInitException, _intervals
 
 ### assistant
 def test_add_job():
-    jm = assistant.JobManager()
-    jm.add_job("A", "path", params=None, is_active=False)
-    assert len(jm.jobs) == 1
-    assert "A" in jm.jobs
+    a = assistant.Assistant()
+    a.add_job("A", "path", params=None, is_active=False)
+    assert len(a.jobs) == 1
+    assert "A" in a.jobs
     with pytest.raises(assistant.AssistantAddJobException):
-        jm.add_job("A", "path2", params=None, is_active=False)
+        a.add_job("A", "path2", params=None, is_active=False)
 
 def test_dump_jobs():
-    jm = assistant.JobManager()
-    jm.add_job("A", "path", params=None, is_active=False)
-    cfg = jm.jobs_json()
+    a = assistant.Assistant()
+    a.add_job("A", "path", params=None, is_active=False)
+    cfg = a.jobs_json()
     assert len(cfg["jobs"]) == 1
     assert "A" in cfg["jobs"]
 
@@ -55,7 +55,10 @@ def test_job_from_cfg():
     assert j.schedule[1].interval == Interval.daily
     assert j.schedule[1].interval_arg == None
 
+
+###
 ### job
+###
 def test_job():
     j_default = job.Job(name="A", path="whatever")
     assert j_default.params==None

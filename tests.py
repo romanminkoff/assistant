@@ -55,6 +55,21 @@ def test_job_from_cfg():
     assert j.schedule[1].interval == Interval.daily
     assert j.schedule[1].interval_arg == None
 
+def test_make_cmd():
+    j = job.Job("a", "some_path")
+    assert assistant._make_cmd(j) == ["python", "some_path"]
+    j = job.Job("a", "path/to/file.py", params={"1": "one", "b": "is_be"})
+    assert assistant._make_cmd(j) == [
+        "python", "path/to/file.py", "1", "one", "b", "is_be"
+    ]
+
+def test_stdout_msg():
+    assert assistant._stdout_msg(None) == None
+    assert assistant._stdout_msg("") == None
+    assert assistant._stdout_msg("some text\nand more\n") == None
+    assert assistant._stdout_msg("{'a': 4}") == None
+    assert assistant._stdout_msg("{'for Assistant': {'a': 4}}") == {"a": 4}
+
 
 ###
 ### job

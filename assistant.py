@@ -37,14 +37,30 @@ def _settings(fname=SETTINGS_FILE):
     with open(path) as f:
         return json.load(f)
 
+def _make_cmd(job: job.Job):
+    cmd = ["python", job.path]
+    if job.params:
+        cmd.extend(job.params_list())
+    return cmd
+
+def _stdout_msg(decoded_str):
+    if not decoded_str:
+        return
+    lines = decoded_str.replace("'", '"').split("\n")
+    for line in lines:
+        try:
+            d = json.loads(line)
+            if msg := d.get("for Assistant"):
+                return msg
+        except:
+            pass
+
 def _job_runner(a, name):
-    j: job.Job = a.jobs.get(name)
-    cmd = ["start", "cmd", "/C", "python"]
-    cmd.append(j.path)
-    if j.params:
-        cmd.extend(j.params_list())
+    cmd = _make_cmd(a.jobs.get(name))
     print(f"  Launching scheduled job: {' '.join(cmd)}")
-    subprocess.Popen(cmd, shell=True)
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+    p.wait()
+    msg = _stdout_msg(p.stdout.read().decode())
 
 class Assistant:
     def __init__(self):

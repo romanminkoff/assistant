@@ -8,12 +8,34 @@ import sys
 import job
 import scheduler
 
+
 EXCEPTIONS_LIMIT = 5
 INPUT_CHAR = "> "
+SETTINGS_FILE = "settings.json"
+SETTINGS_DEFAULT = {
+    "messenger": {
+        "slack": {
+            "base_api_url": None,
+            "token": None,
+            "channel": None
+        }
+    }
+}
 
 
 class AssistantAddJobException(Exception):
     pass
+
+def _create_settings_file(path):
+    with open(path, "wt") as f:
+        json.dump(SETTINGS_DEFAULT, f, indent=4)
+
+def _settings(fname=SETTINGS_FILE):
+    path = os.path.join(os.getcwd(), fname)
+    if not os.path.exists(path):
+        _create_settings_file(path)
+    with open(path) as f:
+        return json.load(f)
 
 def _job_runner(jm, name):
     j: job.Job = jm.jobs.get(name)
@@ -28,6 +50,7 @@ class JobManager:
     def __init__(self):
         self.jobs = {}
         self.scheduler = scheduler.Scheduler(_job_runner, runner_arg=self)
+        self.settings = _settings()
 
     def add_job(self, name, path, params, is_active):
         if name in self.jobs:

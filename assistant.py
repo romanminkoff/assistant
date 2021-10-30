@@ -6,36 +6,17 @@ import subprocess
 import sys
 
 import job
+import messenger
+import settings
 import scheduler
 
 
 EXCEPTIONS_LIMIT = 5
 INPUT_CHAR = "> "
-SETTINGS_FILE = "settings.json"
-SETTINGS_DEFAULT = {
-    "messenger": {
-        "slack": {
-            "base_api_url": None,
-            "token": None,
-            "channel": None
-        }
-    }
-}
 
 
 class AssistantAddJobException(Exception):
     pass
-
-def _create_settings_file(path):
-    with open(path, "wt") as f:
-        json.dump(SETTINGS_DEFAULT, f, indent=4)
-
-def _settings(fname=SETTINGS_FILE):
-    path = os.path.join(os.getcwd(), fname)
-    if not os.path.exists(path):
-        _create_settings_file(path)
-    with open(path) as f:
-        return json.load(f)
 
 def _make_cmd(job: job.Job):
     cmd = ["python", job.path]
@@ -55,18 +36,26 @@ def _stdout_msg(decoded_str):
         except:
             pass
 
+def _send_msg(a, job_name, msg):
+    if not msg or not "text" in msg:
+        msg = {"text": f"{job_name} failed, or output format is incorrect"}
+    msgr_cfg = settings.messenger_cfg(a.settings)
+    txt = msg.get("text")
+    messenger.send_text_msg(msgr_cfg, txt)
+
 def _job_runner(a, name):
     cmd = _make_cmd(a.jobs.get(name))
     print(f"  Launching scheduled job: {' '.join(cmd)}")
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
     p.wait()
     msg = _stdout_msg(p.stdout.read().decode())
+    _send_msg(a, name, msg)
 
 class Assistant:
     def __init__(self):
         self.jobs = {}
         self.scheduler = scheduler.Scheduler(_job_runner, runner_arg=self)
-        self.settings = _settings()
+        self.settings = settings.from_file()
 
     def add_job(self, name, path, params, is_active):
         if name in self.jobs:

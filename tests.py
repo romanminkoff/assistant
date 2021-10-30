@@ -88,6 +88,7 @@ def test_assistant_add_scheduled_jobs():
     assert len(a.scheduler._s.jobs) == sched_len
     sched_job = a.scheduler._s.jobs[0]
     assert sched_job.unit == "weeks"
+    assert sched_job != a.scheduler._s.jobs[1]
 
 
 ###

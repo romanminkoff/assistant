@@ -3,6 +3,8 @@ import pytest
 
 import assistant
 import job
+import messenger
+import settings
 from scheduler import Schedule, Scheduler, Interval, Day, Event
 from scheduler import ScheduleInitException, _intervals
 
@@ -180,3 +182,18 @@ def test_scheduler_flow():
     s.cancel_events("TestEvent")
     assert len(s._s.jobs) == 0
     assert len(s.jobs) == 0
+
+###
+### messenger
+###
+def test_send_text_msg():
+    with pytest.raises(messenger.UnsupportedMessengerException):
+        messenger.send_text_msg({"name": "bla"}, text="text")
+
+###
+### settings
+###
+def test_messenger_cfg():
+    s = {"messenger": {"name": "slack"}}
+    cfg = settings.messenger_cfg(s)
+    assert cfg["name"] == "slack"

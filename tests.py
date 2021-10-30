@@ -11,41 +11,50 @@ from scheduler import ScheduleInitException, _intervals
 
 ### assistant
 def test_add_job():
-    a = assistant.Assistant()
+    a = assistant.Assistant(debug=True)
     a.add_job("A", "path", params=None, is_active=False)
     assert len(a.jobs) == 1
     assert "A" in a.jobs
+    a.add_job("B", "path2", params=None, is_active=False)
+    assert len(a.jobs) == 2
+    assert "B" in a.jobs
     with pytest.raises(assistant.AssistantAddJobException):
         a.add_job("A", "path2", params=None, is_active=False)
 
 def test_dump_jobs():
-    a = assistant.Assistant()
+    a = assistant.Assistant(debug=True)
     a.add_job("A", "path", params=None, is_active=False)
     cfg = a.jobs_json()
     assert len(cfg["jobs"]) == 1
     assert "A" in cfg["jobs"]
 
-def test_job_from_cfg():
-    cfg = {
-        "name": "A",
-        "path": "path",
-        "params": {
-            "whatever": 5
-        },
-        "is_active": False,
-        "schedule": [
-            {
-                "time": "15:34:00",
-                "interval": "weekday",
-                "interval_arg": "Friday"
+_jobs_cfg = { 
+    "jobs": {
+        "test_job": {
+            "name": "A",
+            "path": "path",
+            "params": {
+                "whatever": 5
             },
-            {
-                "time": "04:01:05",
-                "interval": "daily",
-                "interval_arg": None
-            }
-        ]
+            "is_active": False,
+            "schedule": [
+                {
+                    "time": "15:34:00",
+                    "interval": "weekday",
+                    "interval_arg": "Friday"
+                },
+                {
+                    "time": "04:01:05",
+                    "interval": "daily",
+                    "interval_arg": None
+                }
+            ]
+        }
     }
+}
+
+def test_job_from_cfg():
+    cfg = _jobs_cfg["jobs"]["test_job"]
     j = job.from_cfg(cfg)
     assert j.name == cfg["name"]
     assert j.path == cfg["path"]
@@ -71,6 +80,14 @@ def test_stdout_msg():
     assert assistant._stdout_msg("some text\nand more\n") == None
     assert assistant._stdout_msg("{'a': 4}") == None
     assert assistant._stdout_msg("{'for Assistant': {'a': 4}}") == {"a": 4}
+
+def test_assistant_add_scheduled_jobs():
+    a = assistant.Assistant(debug=True)
+    assistant._load_jobs(a, _jobs_cfg)
+    sched_len = len(_jobs_cfg["jobs"]["test_job"]["schedule"])
+    assert len(a.scheduler._s.jobs) == sched_len
+    sched_job = a.scheduler._s.jobs[0]
+    assert sched_job.unit == "weeks"
 
 
 ###

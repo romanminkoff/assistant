@@ -52,20 +52,24 @@ def _job_runner(a, name):
     _send_msg(a, name, msg)
 
 class Assistant:
-    def __init__(self):
+    def __init__(self, debug=False):
         self.jobs = {}
         self.scheduler = scheduler.Scheduler(_job_runner, runner_arg=self)
-        self.settings = settings.from_file()
+        self.settings = {} if debug else settings.from_file()
+
+    def _add_schedule_job(self, j):
+        self.jobs.update({j.name: j})
+        self._reschedule_job(j.name)
 
     def add_job(self, name, path, params, is_active):
         if name in self.jobs:
             raise AssistantAddJobException(f"Job {name} is already in the list.")
         j = job.Job(name, path, params, is_active)
-        self.jobs.update({name: j})
+        self._add_schedule_job(j)
 
     def add_job_from_json(self, job_dict):
         j = job.from_cfg(job_dict)
-        self.jobs.update({j.name, j})
+        self._add_schedule_job(j)
 
     def jobs_json(self):
         cfg = {"jobs": {}}
@@ -78,7 +82,11 @@ class Assistant:
         for _, job in self.jobs.items():
             pprint.pprint(job.json())
 
-    def reschedule_job(self, name):
+    def reschedule_job(self, name, sched):
+        self.jobs[name].schedule.append(sched)
+        self._reschedule_job(name)
+
+    def _reschedule_job(self, name):
         self.scheduler.cancel_events(name)
         for s in self.jobs[name].schedule:
             e = scheduler.Event(name, s)
@@ -156,9 +164,7 @@ def cmd_schedule_job(a: Assistant):
             print(f"  Incorrect argument ({interval_arg})")
             return
     s = scheduler.Schedule(t, interval, interval_arg)
-    a.jobs[name].schedule.append(s)
-    print("  Job schedule was updated.")
-    a.reschedule_job(name)
+    a.reschedule_job(name, s)
     print(f"  Job was rescheduled ({a.jobs[name].schedule_json()})")
 
 commands = {

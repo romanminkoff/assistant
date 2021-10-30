@@ -110,12 +110,13 @@ class Scheduler:
             j = self._s.every().day.at(t).do(_scheduler_runner, (self, event))
             self._add_job(event.name, j)
         elif event.schedule.interval == Interval.weekday:
-            sched_day = getattr(self._s.every(), event.schedule.interval_arg)
+            weekday = event.schedule.interval_arg.lower()
+            sched_day = getattr(self._s.every(), weekday)
             j = sched_day.at(t).do(_scheduler_runner, (self, event))
             self._add_job(event.name, j)
         elif event.schedule.interval == Interval.workdays:
             for day in Day.workDays():
-                sched_day = getattr(self._s.every(), day)
+                sched_day = getattr(self._s.every(), day.lower())
                 j = sched_day.at(t).do(_scheduler_runner, (self, event))
                 self._add_job(event.name, j)
 

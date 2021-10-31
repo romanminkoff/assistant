@@ -90,6 +90,15 @@ def test_assistant_add_scheduled_jobs():
     assert sched_job.unit == "weeks"
     assert sched_job != a.scheduler._s.jobs[1]
 
+def test_assistant_schedule_workdays_job():
+    a = assistant.Assistant(debug=True)
+    a.add_job("A", "path", params=None, is_active=False)
+    s = Schedule(datetime.time(16,45), Interval.workdays)
+    a.reschedule_job("A", s)
+    assert len(a.scheduler._s.jobs) == 5
+    a.scheduler.cancel_events("A")
+    assert len(a.scheduler._s.jobs) == 0
+
 
 ###
 ### job

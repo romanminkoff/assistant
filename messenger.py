@@ -1,10 +1,10 @@
-import slack
+import slack_sdk
 
 class SlackConnectionException(Exception):
     pass
 
 def _test_slack_connection():
-    api_response = slack.WebClient(token="", ).api_test()
+    api_response = slack_sdk.WebClient(token="", ).api_test()
     if api_response:
         return api_response.data["ok"]
 
@@ -16,8 +16,9 @@ def slack_send_txt(cfg, text):
         raise SlackConnectionException()
     if not "url" in cfg:
         raise MessengerClientAuthSetupException(cfg["name"])
-    client = slack.WebhookClient(cfg["url"])
-    client.send(text=text)
+    client = slack_sdk.webhook.WebhookClient(cfg["url"])
+    resp = client.send(text=text)
+    return True if resp.status_code == 200 else False
 
 class UnsupportedMessengerException(Exception):
     pass

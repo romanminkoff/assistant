@@ -11,7 +11,7 @@ from scheduler import ScheduleInitException, _intervals
 
 ### assistant
 def test_add_job():
-    a = assistant.Assistant(debug=True)
+    a = assistant.Assistant()
     a.add_job("A", "path", params=None, is_active=False)
     assert len(a.jobs) == 1
     assert "A" in a.jobs
@@ -22,7 +22,7 @@ def test_add_job():
         a.add_job("A", "path2", params=None, is_active=False)
 
 def test_dump_jobs():
-    a = assistant.Assistant(debug=True)
+    a = assistant.Assistant()
     a.add_job("A", "path", params=None, is_active=False)
     cfg = a.jobs_json()
     assert len(cfg["jobs"]) == 1
@@ -74,15 +74,8 @@ def test_make_cmd():
         "python", "path/to/file.py", "1", "one", "b", "is_be"
     ]
 
-def test_stdout_msg():
-    assert assistant._stdout_msg(None) == None
-    assert assistant._stdout_msg("") == None
-    assert assistant._stdout_msg("some text\nand more\n") == None
-    assert assistant._stdout_msg("{'a': 4}") == None
-    assert assistant._stdout_msg("{'for Assistant': {'a': 4}}") == {"a": 4}
-
 def test_assistant_add_scheduled_jobs():
-    a = assistant.Assistant(debug=True)
+    a = assistant.Assistant()
     assistant._load_jobs(a, _jobs_cfg)
     sched_len = len(_jobs_cfg["jobs"]["test_job"]["schedule"])
     assert len(a.scheduler._s.jobs) == sched_len
@@ -91,7 +84,7 @@ def test_assistant_add_scheduled_jobs():
     assert sched_job != a.scheduler._s.jobs[1]
 
 def test_assistant_schedule_workdays_job():
-    a = assistant.Assistant(debug=True)
+    a = assistant.Assistant()
     a.add_job("A", "path", params=None, is_active=False)
     s = Schedule(datetime.time(16,45), Interval.workdays)
     a.reschedule_job("A", s)

@@ -4,7 +4,9 @@ import os
 import pprint
 import subprocess
 import sys
+import threading
 
+import assistant_api
 import job
 import messenger
 import settings
@@ -18,44 +20,33 @@ INPUT_CHAR = "> "
 class AssistantAddJobException(Exception):
     pass
 
+def _msg_from_broker(json_obj):
+    msg = json.loads(json_obj)
+    msgr_cfg = settings.messenger_cfg(settings.from_file())
+    txt = msg.get("text")
+    messenger.send_text_msg(msgr_cfg, txt)
+
 def _make_cmd(job: job.Job):
     cmd = ["python", job.path]
     if job.params:
         cmd.extend(job.params_list())
     return cmd
 
-def _stdout_msg(decoded_str):
-    if not decoded_str:
-        return
-    lines = decoded_str.replace("'", '"').split("\n")
-    for line in lines:
-        try:
-            d = json.loads(line)
-            if msg := d.get("for Assistant"):
-                return msg
-        except:
-            pass
-
-def _send_msg(a, job_name, msg):
-    if not msg or not "text" in msg:
-        msg = {"text": f"{job_name} failed, or output format is incorrect"}
-    msgr_cfg = settings.messenger_cfg(a.settings)
-    txt = msg.get("text")
-    messenger.send_text_msg(msgr_cfg, txt)
-
 def _job_runner(a, name):
     cmd = _make_cmd(a.jobs.get(name))
     print(f"  Launching scheduled job: {' '.join(cmd)}")
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-    p.wait()
-    msg = _stdout_msg(p.stdout.read().decode())
-    _send_msg(a, name, msg)
+    subprocess.run(cmd)
 
 class Assistant:
-    def __init__(self, debug=False):
+    def __init__(self):
         self.jobs = {}
         self.scheduler = scheduler.Scheduler(_job_runner, runner_arg=self)
-        self.settings = {} if debug else settings.from_file()
+        self._listen_msg_broker()
+    
+    def _listen_msg_broker(self):
+        t = threading.Thread(group=None, target=assistant_api.receiver,
+            args=(_msg_from_broker,), daemon=True)
+        t.start()
 
     def _add_schedule_job(self, j):
         self.jobs.update({j.name: j})

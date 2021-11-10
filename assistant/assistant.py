@@ -38,14 +38,15 @@ def _job_runner(a, name):
     subprocess.run(cmd)
 
 class Assistant:
-    def __init__(self):
+    def __init__(self, msg_from_broker=_msg_from_broker):
         self.jobs = {}
         self.scheduler = scheduler.Scheduler(_job_runner, runner_arg=self)
-        self._listen_msg_broker()
+        self._listen_msg_broker(msg_from_broker)
     
-    def _listen_msg_broker(self):
+    def _listen_msg_broker(self, msg_from_broker):
+        print(f"start thread with listener: {msg_from_broker}")
         t = threading.Thread(group=None, target=api.receiver,
-            args=(_msg_from_broker,), daemon=True)
+            args=(msg_from_broker,), daemon=True)
         t.start()
 
     def _add_schedule_job(self, j):

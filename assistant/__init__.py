@@ -1,1 +1,1 @@
-from assistant import assistant_api
+from assistant import api

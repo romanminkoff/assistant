@@ -6,7 +6,7 @@ import subprocess
 import sys
 import threading
 
-from . import assistant_api
+from . import api
 from . import job
 from . import messenger
 from . import settings
@@ -44,7 +44,7 @@ class Assistant:
         self._listen_msg_broker()
     
     def _listen_msg_broker(self):
-        t = threading.Thread(group=None, target=assistant_api.receiver,
+        t = threading.Thread(group=None, target=api.receiver,
             args=(_msg_from_broker,), daemon=True)
         t.start()
 

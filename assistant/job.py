@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from scheduler import Schedule, TIME_FMT
+from .scheduler import Schedule, TIME_FMT
 
 
 class Job:

@@ -6,11 +6,11 @@ import subprocess
 import sys
 import threading
 
-import assistant_api
-import job
-import messenger
-import settings
-import scheduler
+from . import assistant_api
+from . import job
+from . import messenger
+from . import settings
+from . import scheduler
 
 
 EXCEPTIONS_LIMIT = 5

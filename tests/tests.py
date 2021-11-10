@@ -1,12 +1,12 @@
 import datetime
 import pytest
 
-import assistant
-import job
-import messenger
-import settings
-from scheduler import Schedule, Scheduler, Interval, Day, Event
-from scheduler import ScheduleInitException, _intervals
+from assistant import assistant
+from assistant import job
+from assistant import messenger
+from assistant import settings
+from assistant.scheduler import Schedule, Scheduler, Interval, Day, Event
+from assistant.scheduler import ScheduleInitException, _intervals
 
 
 ### assistant

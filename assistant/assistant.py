@@ -44,7 +44,6 @@ class Assistant:
         self._listen_msg_broker(msg_from_broker)
     
     def _listen_msg_broker(self, msg_from_broker):
-        print(f"start thread with listener: {msg_from_broker}")
         t = threading.Thread(group=None, target=api.receiver,
             args=(msg_from_broker,), daemon=True)
         t.start()

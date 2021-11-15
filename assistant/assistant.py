@@ -83,6 +83,9 @@ class Assistant:
             e = scheduler.Event(name, s)
             self.scheduler.schedule_event(e)
 
+    def next_run(self):
+        return self.scheduler.next_run()
+
 
 def print_available_commands():
     print(f"Available commands: {list(commands.keys())}")

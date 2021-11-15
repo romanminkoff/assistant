@@ -203,6 +203,19 @@ def test_scheduler_flow():
     assert len(s._s.jobs) == 0
     assert len(s.jobs) == 0
 
+def test_scheduler_next_job_run():
+    a = assistant.Assistant()
+    a.add_job("A", "path", params=None, is_active=True)
+    in_15_minutes = datetime.datetime.now() + datetime.timedelta(minutes=15)
+    in_15_minutes = in_15_minutes.replace(microsecond=0)
+    s = Schedule(in_15_minutes.time(), Interval.workdays)
+    a.reschedule_job("A", s)
+    in_5_minutes = datetime.datetime.now() + datetime.timedelta(minutes=5)
+    in_5_minutes = in_5_minutes.replace(microsecond=0)
+    s = Schedule(in_5_minutes.time(), Interval.workdays)
+    a.reschedule_job("A", s)
+    assert a.next_run() == in_5_minutes
+
 ###
 ### messenger
 ###

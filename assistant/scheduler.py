@@ -119,9 +119,13 @@ class Scheduler:
                 sched_day = getattr(self._s.every(), day.lower())
                 j = sched_day.at(t).do(_scheduler_runner, (self, event))
                 self._add_job(event.name, j)
+        
 
     def cancel_events(self, name):
         if jobs := self.jobs.get(name):
             for j in jobs:
                 self._s.cancel_job(j)
             del self.jobs[name]
+    
+    def next_run(self):
+        return self._s.next_run

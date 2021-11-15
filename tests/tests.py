@@ -215,6 +215,8 @@ def test_scheduler_next_job_run():
     s = Schedule(in_5_minutes.time(), Interval.workdays)
     a.reschedule_job("A", s)
     assert a.next_run() == in_5_minutes
+    a.scheduler.cancel_events("A")
+    assert a.next_run() == None
 
 ###
 ### messenger

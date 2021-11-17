@@ -7,6 +7,7 @@ import sys
 import threading
 
 from . import api
+from . import command
 from . import job
 from . import messenger
 from . import settings
@@ -87,13 +88,6 @@ class Assistant:
         return self.scheduler.next_run()
 
 
-def print_available_commands():
-    print(f"Available commands: {list(commands.keys())}")
-
-def cmd_help(a):
-    print("Usage: enter command.")
-    print_available_commands()
-
 def cmd_exit(a):
     print("Have a nice day!")
     sys.exit(0)
@@ -161,32 +155,30 @@ def cmd_schedule_job(a: Assistant):
     a.reschedule_job(name, s)
     print(f"  Job was rescheduled ({a.jobs[name].schedule_json()})")
 
-commands = {
-    "help": cmd_help,
-    "q": cmd_exit,
-    "jobs": cmd_list_jobs,
-    "j": cmd_list_jobs,
-    "add job": cmd_add_job,
-    "save jobs": cmd_save_jobs,
-    "load jobs": cmd_load_jobs_from_config,
-    "schedule job": cmd_schedule_job,
-}
-
-def input_cmd():
-    s = input(INPUT_CHAR)
-    if cmd := commands.get(s):
-        return cmd
-    else:
-        print(f"Unrecognized command <{s}>.")
-        return cmd_help
+def commands():
+    c = command.Commands()
+    c.add(command.Cmd(['q'], cmd_exit, 'Quit'))
+    c.add(command.Cmd(['j','jobs'], cmd_list_jobs, 'List jobs'))
+    c.add(command.Cmd(['aj','add job'], cmd_add_job, 'Add a new job'))
+    c.add(command.Cmd(['save jobs'], cmd_save_jobs, 'Save jobs to a file'))
+    c.add(command.Cmd(['load jobs'], cmd_load_jobs_from_config,
+                      'Load jobs from a file'))
+    c.add(command.Cmd(['schedule job'], cmd_schedule_job,
+                      'Schedule specific job'))
+    def help(a):
+        print(c.help())
+    c.add(command.Cmd(['h','help'], help, 'Print available commands'),
+          default=True)
+    return c
 
 def main():
     a = Assistant()
+    cmds = commands()
     attempts_to_continue = 0
     while(attempts_to_continue < EXCEPTIONS_LIMIT):
         try:
-            cmd = input_cmd()
-            cmd(a)
+            cmd_name = input(INPUT_CHAR)
+            cmds.call(cmd_name, a)
         except KeyboardInterrupt:
             cmd_exit()
         except SystemExit:

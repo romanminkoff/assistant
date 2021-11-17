@@ -88,6 +88,9 @@ class Assistant:
         return self.scheduler.next_run()
 
 
+def cmd_next_job_run(a):
+    print(a.next_run())
+
 def cmd_exit(a):
     print("Have a nice day!")
     sys.exit(0)
@@ -165,6 +168,8 @@ def commands():
                       'Load jobs from a file'))
     c.add(command.Cmd(['schedule job'], cmd_schedule_job,
                       'Schedule specific job'))
+    c.add(command.Cmd(['next run'], cmd_next_job_run,
+                       'Print time when the next job should run'))
     def help(a):
         print(c.help())
     c.add(command.Cmd(['h','help'], help, 'Print available commands'),

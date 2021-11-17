@@ -5,9 +5,9 @@ from assistant import assistant
 from assistant import job
 from assistant import messenger
 from assistant import settings
+from assistant.command import Cmd, Commands
 from assistant.scheduler import Schedule, Scheduler, Interval, Day, Event
 from assistant.scheduler import ScheduleInitException, _intervals
-
 
 ### assistant
 def test_add_job():
@@ -232,3 +232,59 @@ def test_messenger_cfg():
     s = {"messenger": {"name": "slack"}}
     cfg = settings.messenger_cfg(s)
     assert cfg["name"] == "slack"
+
+###
+### command
+###
+def test_commands_default_command():
+    c = Commands()
+    c1 = Cmd(['def','c'], _cmd, 'Default command')
+    c.add(c1, default=True)
+    assert c.cmd('d').help == 'Default command'
+
+def test_commands_get_cmd():
+    c = Commands()
+    c1 = Cmd(['cmd','c'], _cmd, 'CMD command')
+    c.add(c1)
+    c2 = Cmd(['do'], _cmd, 'Do command')
+    c.add(c2)
+    assert c.cmd('cmd').help == 'CMD command'
+    assert c.cmd('c').help == 'CMD command'
+    assert c.cmd('do').help == 'Do command'
+    assert c.cmd('cmd').call == _cmd
+    assert c.cmd('do').call == _cmd
+
+def test_help_str():
+    c = Commands()
+    c1 = Cmd(['cmd','c'], _cmd, 'C cmd')
+    c.add(c1)
+    c2 = Cmd(['do'], _cmd, 'D cmd')
+    c.add(c2)
+    help_str = '  Commands:\n    cmd, c: C cmd\n    do: D cmd'
+    assert c.help() == help_str
+
+class CmdExecutedException(Exception):
+    pass
+
+def _cmd(arg):
+    raise CmdExecutedException()
+
+def test_commands_call_cmd():
+    c = Commands()
+    c1 = Cmd(['cmd','c'], _cmd, 'A command')
+    c.add(c1)
+    with pytest.raises(CmdExecutedException):
+        c.call('cmd', 'a')
+
+def test_commands_call_cmd_shortcut():
+    c = Commands()
+    c1 = Cmd(['cmd','c'], _cmd, 'A command')
+    c.add(c1)
+    with pytest.raises(CmdExecutedException):
+        c.call('c', 'a')
+
+def test_cmd_help_str():
+    c1 = Cmd(['cmd'], _cmd, 'CMD command')
+    assert c1.help_str() == 'cmd: CMD command'
+    c1 = Cmd(['cmd','c'], _cmd, 'CMD command')
+    assert c1.help_str() == 'cmd, c: CMD command'

@@ -212,7 +212,7 @@ def test_scheduler_next_job_run():
     a.reschedule_job("A", s)
     in_5_minutes = datetime.datetime.now() + datetime.timedelta(minutes=5)
     in_5_minutes = in_5_minutes.replace(microsecond=0)
-    s = Schedule(in_5_minutes.time(), Interval.workdays)
+    s = Schedule(in_5_minutes.time(), Interval.daily)
     a.reschedule_job("A", s)
     assert a.next_run() == in_5_minutes
     a.scheduler.cancel_events("A")

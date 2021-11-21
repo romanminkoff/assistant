@@ -165,7 +165,7 @@ def cmd_schedule_job(a: Assistant):
     a.reschedule_job(name, s)
     print(f"  Job was rescheduled ({a.jobs[name].schedule_json()})")
 
-def commands():
+def _commands():
     c = command.Commands()
     c.add(command.Cmd(['q'], cmd_exit, 'Quit'))
     c.add(command.Cmd(['j','jobs'], cmd_list_jobs, 'List jobs'))
@@ -177,10 +177,26 @@ def commands():
                       'Schedule specific job'))
     c.add(command.Cmd(['next run'], cmd_next_job_run,
                        'Print time when the next job should run'))
-    def help(a):
-        print(c.help())
-    c.add(command.Cmd(['h','help'], help, 'Print available commands'),
-          default=True)
+    return c
+def commands():
+    c = command.Commands()
+    c.add(command.Cmd(['q'], cmd_exit, 'Quit'))
+
+    jobs = command.Cmd(['jobs','j'], cmd_list_jobs, 'List jobs')
+    j_add = command.Cmd(['add'], cmd_add_job, 'Add a new job')
+    jobs.add_subcmd(j_add)
+    j_save = command.Cmd(['save'], cmd_save_jobs, 'Save jobs to a file')
+    jobs.add_subcmd(j_save)
+    j_load = command.Cmd(['load'], cmd_load_jobs_from_config,
+                         'Load jobs from a file')
+    jobs.add_subcmd(j_load)
+    j_sched = command.Cmd(['schedule','sched'], cmd_schedule_job,
+                          'Schedule specific job')
+    jobs.add_subcmd(j_sched)
+    j_next = command.Cmd(['next_run','next'], cmd_next_job_run,
+                       'Print time when the next job should run')
+    jobs.add_subcmd(j_next)
+    c.add(jobs)
     return c
 
 def main():

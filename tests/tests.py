@@ -236,6 +236,12 @@ def test_messenger_cfg():
 ###
 ### command
 ###
+class CmdExecutedException(Exception):
+    pass
+
+def _cmd(arg):
+    raise CmdExecutedException()
+
 def test_commands_default_command():
     c = Commands()
     c1 = Cmd(['def','c'], _cmd, 'Default command')
@@ -262,12 +268,6 @@ def test_help_str():
     c.add(c2)
     help_str = '  Commands:\n    cmd, c: C cmd\n    do: D cmd'
     assert c.help() == help_str
-
-class CmdExecutedException(Exception):
-    pass
-
-def _cmd(arg):
-    raise CmdExecutedException()
 
 def test_commands_call_cmd():
     c = Commands()

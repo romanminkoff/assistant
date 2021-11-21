@@ -43,7 +43,14 @@ class Assistant:
         self.jobs = {}
         self.scheduler = scheduler.Scheduler(_job_runner, runner_arg=self)
         self._listen_msg_broker(msg_from_broker)
+        self._check_settings_file()
     
+    def _check_settings_file(self):
+        s = settings.from_file()
+        if not s:
+            fname = settings.create_settings_file()
+            print(f'NOTE: creating default settings file {fname}')
+
     def _listen_msg_broker(self, msg_from_broker):
         t = threading.Thread(group=None, target=api.receiver,
             args=(msg_from_broker,), daemon=True)

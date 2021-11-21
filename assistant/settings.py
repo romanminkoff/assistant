@@ -15,13 +15,19 @@ def messenger_cfg(s):
         print("Messenger is not configured. Check settings.json.")
     return msgr
 
-def _create_settings_file(path):
+class SettingsFileExists(Exception):
+    pass
+
+def create_settings_file(fname=SETTINGS_FILE):
+    path = os.path.join(os.getcwd(), fname)
+    if os.path.exists(path):
+        raise SettingsFileExists()
     with open(path, "wt") as f:
         json.dump(SETTINGS_DEFAULT, f, indent=4)
+    return path
 
 def from_file(fname=SETTINGS_FILE):
     path = os.path.join(os.getcwd(), fname)
-    if not os.path.exists(path):
-        _create_settings_file(path)
-    with open(path) as f:
-        return json.load(f)
+    if os.path.exists(path):
+        with open(path) as f:
+            return json.load(f)

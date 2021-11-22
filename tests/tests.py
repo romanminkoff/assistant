@@ -5,7 +5,7 @@ from assistant import assistant
 from assistant import job
 from assistant import messenger
 from assistant import settings
-from assistant.command import Cmd, Commands
+from assistant.command import Cmd, Commands, _split_cmd
 from assistant.scheduler import Schedule, Scheduler, Interval, Day, Event
 from assistant.scheduler import ScheduleInitException, _intervals
 
@@ -246,7 +246,7 @@ def test_commands_default_command():
     c = Commands()
     c1 = Cmd(['def','c'], _cmd, 'Default command')
     c.add(c1, default=True)
-    assert c.cmd('d').help == 'Default command'
+    assert c.cmd('d').help_str == 'Default command'
 
 def test_commands_get_cmd():
     c = Commands()
@@ -254,11 +254,11 @@ def test_commands_get_cmd():
     c.add(c1)
     c2 = Cmd(['do'], _cmd, 'Do command')
     c.add(c2)
-    assert c.cmd('cmd').help == 'CMD command'
-    assert c.cmd('c').help == 'CMD command'
-    assert c.cmd('do').help == 'Do command'
-    assert c.cmd('cmd').call == _cmd
-    assert c.cmd('do').call == _cmd
+    assert c.cmd('cmd').help_str == 'CMD command'
+    assert c.cmd('c').help_str == 'CMD command'
+    assert c.cmd('do').help_str == 'Do command'
+    assert c.cmd('cmd').callback == _cmd
+    assert c.cmd('do').callback == _cmd
 
 def test_help_str():
     c = Commands()
@@ -267,6 +267,7 @@ def test_help_str():
     c2 = Cmd(['do'], _cmd, 'D cmd')
     c.add(c2)
     help_str = '  Commands:\n    cmd, c: C cmd\n    do: D cmd'
+    print(c.help())
     assert c.help() == help_str
 
 def test_commands_call_cmd():
@@ -285,6 +286,75 @@ def test_commands_call_cmd_shortcut():
 
 def test_cmd_help_str():
     c1 = Cmd(['cmd'], _cmd, 'CMD command')
-    assert c1.help_str() == 'cmd: CMD command'
+    assert c1.help() == 'cmd: CMD command'
     c1 = Cmd(['cmd','c'], _cmd, 'CMD command')
-    assert c1.help_str() == 'cmd, c: CMD command'
+    assert c1.help() == 'cmd, c: CMD command'
+
+class CmdExecutedException(Exception):
+    pass
+
+class CmdSubExecutedException(Exception):
+    pass
+
+def _cmd(arg):
+    raise CmdExecutedException()
+
+def _cmd_sub(arg):
+    raise CmdSubExecutedException()
+
+def test_add_subcommand():
+    c = Commands()
+    c1 = Cmd(['c1'], _cmd, 'Cmd 1')
+    c1_1 = Cmd(['c11'], _cmd_sub, 'Sub cmd 1')
+    c1.add_subcmd(c1_1)
+    c.add(c1)
+    assert len(c1.cmds) == 1
+    assert c1.cmds[0].help() == 'c11: Sub cmd 1'
+
+def test_call_subcommand():
+    c = Commands()
+    c1_main = Cmd(['c1'], help='Cmd main')
+    c1_sub1 = Cmd(['c1_1'], help='Cmd 1->1')
+    c1_s1_s1 = Cmd(['c1_1_1'], _cmd_sub, help='Cmd 1->1->1')
+
+    c1_sub1.add_subcmd(c1_s1_s1)
+    c1_main.add_subcmd(c1_sub1)
+    c.add(c1_main)
+    
+    with pytest.raises(CmdSubExecutedException):
+        c.call('c1.c1_1.c1_1_1', None)
+
+def test_subcommand_help():
+    c1_main = Cmd(['c1'], help='Cmd main')
+    c1_s1 = Cmd(['c1_1'], help='Cmd 1->1')
+    c1_s1_s1 = Cmd(['c1_1_1', 'u'], _cmd_sub, help='Cmd 1->1->1')
+
+    c1_s1.add_subcmd(c1_s1_s1)
+    c1_main.add_subcmd(c1_s1)
+
+    assert c1_s1_s1.help() == 'c1_1_1, u: Cmd 1->1->1'
+    assert c1_s1.help() == 'c1_1: Cmd 1->1. Sub-commands: c1_1_1, u.'
+
+def test_callback_call_when_subcommands_present():
+    c = Commands()
+    c1_main = Cmd(['c1'], help='Cmd main')
+    c1_s1 = Cmd(['c1_1'], _cmd_sub, help='Cmd 1->1')
+    c1_s1_s1 = Cmd(['c1_1_1'], None, help='Cmd 1->1->1')
+
+    c1_s1.add_subcmd(c1_s1_s1)
+    c1_main.add_subcmd(c1_s1)
+    c.add(c1_main)
+
+    with pytest.raises(CmdSubExecutedException):
+        c.call('c1.c1_1', None)
+
+def test_split_cmd():
+    cases = {
+        '': ['', ''],
+        'aaa': ['aaa', ''],
+        'aa.bb': ['aa', 'bb'],
+        'aa.bb.cc': ['aa', 'bb.cc']
+    }
+    for k, res in cases.items():
+        a, b = _split_cmd(k)
+        assert res == [a,b]

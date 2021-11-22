@@ -107,7 +107,13 @@ def cmd_list_jobs(a):
 
 def cmd_add_job(a):
     name = input("  Name: ")
+    if not name:
+        print("  Please specify the job.")
+        return
     path = input("  Path: ")
+    if not path or not os.path.exists(path):
+        print("  Please check the path.")
+        return
     params = input("  Params (opt): ") or None
     is_active = input("  Is active? y/[n]: ")
     is_active = True if is_active.lower() == "y" else False

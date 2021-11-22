@@ -165,19 +165,6 @@ def cmd_schedule_job(a: Assistant):
     a.reschedule_job(name, s)
     print(f"  Job was rescheduled ({a.jobs[name].schedule_json()})")
 
-def _commands():
-    c = command.Commands()
-    c.add(command.Cmd(['q'], cmd_exit, 'Quit'))
-    c.add(command.Cmd(['j','jobs'], cmd_list_jobs, 'List jobs'))
-    c.add(command.Cmd(['aj','add job'], cmd_add_job, 'Add a new job'))
-    c.add(command.Cmd(['save jobs'], cmd_save_jobs, 'Save jobs to a file'))
-    c.add(command.Cmd(['load jobs'], cmd_load_jobs_from_config,
-                      'Load jobs from a file'))
-    c.add(command.Cmd(['schedule job'], cmd_schedule_job,
-                      'Schedule specific job'))
-    c.add(command.Cmd(['next run'], cmd_next_job_run,
-                       'Print time when the next job should run'))
-    return c
 def commands():
     c = command.Commands()
     c.add(command.Cmd(['q'], cmd_exit, 'Quit'))

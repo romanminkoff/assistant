@@ -15,7 +15,7 @@ from . import scheduler
 
 
 EXCEPTIONS_LIMIT = 5
-INPUT_CHAR = "> "
+PROMPT_STRING = "> "
 
 
 class AssistantAddJobException(Exception):
@@ -43,11 +43,10 @@ class Assistant:
         self.jobs = {}
         self.scheduler = scheduler.Scheduler(_job_runner, runner_arg=self)
         self._listen_msg_broker(msg_from_broker)
-        self._check_settings_file()
+        self._ensure_settings_file_present()
     
-    def _check_settings_file(self):
-        s = settings.from_file()
-        if not s:
+    def _ensure_settings_file_present(self):
+        if not settings.from_file():
             fname = settings.create_settings_file()
             print(f'NOTE: creating default settings file {fname}')
 
@@ -198,7 +197,7 @@ def main():
     attempts_to_continue = 0
     while(attempts_to_continue < EXCEPTIONS_LIMIT):
         try:
-            cmd_name = input(INPUT_CHAR)
+            cmd_name = input(PROMPT_STRING)
             cmds.call(cmd_name, a)
         except KeyboardInterrupt:
             cmd_exit()

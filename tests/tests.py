@@ -221,9 +221,17 @@ def test_scheduler_next_job_run():
 ###
 ### messenger
 ###
-def test_send_text_msg():
+def test_send_text_msg_exception():
     with pytest.raises(messenger.UnsupportedMessengerException):
-        messenger.send_text_msg({"name": "bla"}, text="text")
+        messenger.send_message(msgr_cfg={"name": "bla"}, payload=None)
+
+def test_to_slack_channel_name():
+    test_vals = {
+        'Some': 'some',
+        'Some nAmE': 'some_name'
+    }
+    for test, ref in test_vals.items():
+        assert messenger._to_slack_channel_name(test) == ref
 
 ###
 ### settings

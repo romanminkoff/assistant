@@ -24,8 +24,7 @@ class AssistantAddJobException(Exception):
 def _msg_from_broker(json_obj):
     msg = json.loads(json_obj)
     msgr_cfg = settings.messenger_cfg(settings.from_file())
-    txt = msg.get("text")
-    messenger.send_text_msg(msgr_cfg, txt)
+    messenger.send_message(msgr_cfg, payload=msg)
 
 def _make_cmd(job: job.Job):
     cmd = ["python", job.path]

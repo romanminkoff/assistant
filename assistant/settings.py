@@ -1,19 +1,20 @@
 import json
 import os
 
-SETTINGS_FILE = "settings.json"
+SETTINGS_FILE = 'settings.json'
 SETTINGS_DEFAULT = {
-    "messenger": {
-        "name": "slack",
-        "url": None
+    'messenger': {
+        'name': 'slack',
+        'token': None,
+        'user_id': None
     }
 }
 
 def messenger_cfg(s):
-    msgr = s.get("messenger")
-    if not msgr:
-        print("Messenger is not configured. Check settings.json.")
-    return msgr
+    if msgr := s.get('messenger'):
+        return msgr
+    else:
+        print(f'Messenger is not configured. Check {SETTINGS_FILE}.')
 
 class SettingsFileExists(Exception):
     pass

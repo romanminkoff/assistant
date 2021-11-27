@@ -1,10 +1,13 @@
 import datetime
+import json
+import os
 import pytest
 
 from assistant import assistant
 from assistant import job
 from assistant import messenger
 from assistant import settings
+from assistant import scheduler
 from assistant.command import Cmd, Commands, _split_cmd
 from assistant.scheduler import Schedule, Scheduler, Interval, Day, Event
 from assistant.scheduler import ScheduleInitException, _intervals
@@ -145,7 +148,7 @@ def test_job_params_list():
     j = job.Job("a", "", params={"a": 1, "b": "bb"})
     assert j.params_list() == ["a", "1", "b", "bb"]
 
-### schedule
+### scheduler
 def test_schedule_daily():
     s = Schedule(datetime.time(4,4,4), Interval.daily)
     assert s.interval == Interval.daily
@@ -218,6 +221,14 @@ def test_scheduler_next_job_run():
     a.scheduler.cancel_events("A")
     assert a.next_run() == None
 
+def test_interval():
+    intervals = [
+        scheduler.Interval.daily,
+        scheduler.Interval.weekday,
+        scheduler.Interval.workdays
+    ]
+    assert set(scheduler.Interval.list()) == set(intervals)
+
 ###
 ### messenger
 ###
@@ -233,6 +244,23 @@ def test_to_slack_channel_name():
     for test, ref in test_vals.items():
         assert messenger._to_slack_channel_name(test) == ref
 
+def test_is_slack_connection_ok():
+    # this should work if internet connection is OK
+    assert messenger._is_slack_connection_ok()
+
+def test_slack_channels():
+    class Result:
+        data = {'ok': True, 'channels': [{'name': 'a'}, {'name': 'b'}]}
+    class Client:
+        def conversations_list(self):
+            return Result()
+    assert messenger._slack_channels(Client()) == ['a', 'b']
+
+def test_slack_send_message_main_raises_on_bad_token():
+    cfg = {'token': None}
+    with pytest.raises(messenger.MessengerClientAuthSetupException):
+        messenger._slack_send_message_main(cfg=cfg, payload=None)
+
 ###
 ### settings
 ###
@@ -240,6 +268,16 @@ def test_messenger_cfg():
     s = {"messenger": {"name": "slack"}}
     cfg = settings.messenger_cfg(s)
     assert cfg["name"] == "slack"
+    cfg = settings.messenger_cfg({'bla': 1})
+    assert cfg == None
+
+def test_create_settings_file():
+    p = settings.create_settings_file(fname="_test_settings.json")
+    assert os.path.exists(p)
+    with open(p) as f:
+        content = json.load(f)
+    os.remove(p)
+    assert content.get('messenger')
 
 ###
 ### command

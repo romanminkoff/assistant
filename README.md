@@ -2,12 +2,12 @@
 ... is like a task manager, which allows scheduling of python scripts and enables communication between them via messaging.
 Scripts can send notifications to a messenger of choice.
 
-Main use case: implement repitative task as a script, schedule and receive notifications to messenger.<br/>
+Main use case: implement repetitive task as a script, schedule and receive notifications to messenger.<br/>
 
 ## Notable features:
   - Jobs: add, schedule, enable, disable, check next run, view a list, save and load from a file.
   - Messenger: receive messages from jobs. *Slack specific*: Assistant creates channels for each job (if it sends messages).
-  - Message broker enables possibility to create a more suffisticated setup with jobs communicating with each other via special events. (TBD)
+  - Message broker enables possibility to create a more sophisticated setup with jobs communicating with each other via special events. (TBD)
   - settings.json 
 
 ## Requirements:

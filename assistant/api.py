@@ -1,9 +1,11 @@
+import json
 import pika
 
 PIKA_QUEUE = "assistant"
 PIKA_HOST = "localhost"
 
-def send_message(json_obj):
+def send_message(msg:dict):
+    json_obj = json.dumps(msg)
     connection = pika.BlockingConnection(
         pika.ConnectionParameters(host=PIKA_HOST))
     channel = connection.channel()

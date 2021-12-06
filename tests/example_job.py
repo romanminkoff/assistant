@@ -1,5 +1,3 @@
-import json
-
 import assistant
 
 def main():
@@ -11,7 +9,7 @@ def main():
     except:
         msg['text'] = 'Failed to run'
     
-    assistant.api.send_message(json.dumps(msg))
+    assistant.api.send_message(msg)
 
 if __name__ == '__main__':
     main()

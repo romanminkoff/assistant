@@ -64,7 +64,7 @@ class Assistant:
         j = job.Job(name, path, params, is_active)
         self._add_schedule_job(j)
 
-    def add_job_from_json(self, job_dict):
+    def load_job_from_json(self, job_dict):
         j = job.from_cfg(job_dict)
         self._add_schedule_job(j)
 
@@ -129,11 +129,11 @@ def cmd_save_jobs(a):
     jobs_json = a.jobs_json()
     with open(name, "wt") as f:
         json.dump(jobs_json, f, indent=4)
-    print(f"  File <name> was created.")
+    print(f"  File {name} was created.")
 
 def _load_jobs(a, cfg):
     for _, job_cfg in cfg["jobs"].items():
-        a.add_job_from_json(job_cfg)
+        a.load_job_from_json(job_cfg)
 
 def _load_jobs_from_file(a, name):
     with open(name) as f:
@@ -190,8 +190,13 @@ def commands():
     c.add(jobs)
     return c
 
+def check_load_jobs_at_startup(a):
+    if len(sys.argv) == 2:
+        _load_jobs_from_file(a, sys.argv[1])
+
 def main():
     a = Assistant()
+    check_load_jobs_at_startup(a)
     cmds = commands()
     attempts_to_continue = 0
     while(attempts_to_continue < EXCEPTIONS_LIMIT):

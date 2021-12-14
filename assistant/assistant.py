@@ -15,7 +15,7 @@ from . import scheduler
 
 
 EXCEPTIONS_LIMIT = 5
-PROMPT_STRING = "> "
+PROMPT_STRING = '> '
 
 
 class AssistantAddJobException(Exception):
@@ -27,14 +27,15 @@ def _msg_from_broker(json_obj):
     messenger.send_message(msgr_cfg, payload=msg)
 
 def _make_cmd(job: job.Job):
-    cmd = ["python", job.path]
+    cmd = ['python', job.path]
     if job.params:
         cmd.extend(job.params_list())
     return cmd
 
 def _job_runner(a, name):
     cmd = _make_cmd(a.jobs.get(name))
-    print(f"  Launching scheduled job: {' '.join(cmd)}")
+    dt = datetime.now().strftime('%Y/%m/%d %H:%M')
+    print(f'  [{dt}] Launching scheduled job: {" ".join(cmd)}')
     subprocess.run(cmd)
 
 class Assistant:
@@ -60,7 +61,7 @@ class Assistant:
 
     def add_job(self, name, path, params, is_active):
         if name in self.jobs:
-            raise AssistantAddJobException(f"Job {name} is already in the list.")
+            raise AssistantAddJobException(f'Job {name} is already in the list.')
         j = job.Job(name, path, params, is_active)
         self._add_schedule_job(j)
 
@@ -69,10 +70,10 @@ class Assistant:
         self._add_schedule_job(j)
 
     def jobs_json(self):
-        cfg = {"jobs": {}}
+        cfg = {'jobs': {}}
         for name, j in self.jobs.items():
             j_str = j.json()
-            cfg["jobs"].update({name: j_str})
+            cfg['jobs'].update({name: j_str})
         return cfg
 
     def pprint_jobs(self):
@@ -97,42 +98,42 @@ def cmd_next_job_run(a):
     print(a.next_run())
 
 def cmd_exit(a):
-    print("Have a nice day!")
+    print('Have a nice day!')
     sys.exit(0)
 
 def cmd_list_jobs(a):
     a.pprint_jobs()
 
 def cmd_add_job(a):
-    name = input("  Name: ")
+    name = input('  Name: ')
     if not name:
-        print("  Please specify the job.")
+        print('  Please specify the job.')
         return
-    path = input("  Path: ")
+    path = input('  Path: ')
     if not path or not os.path.exists(path):
-        print("  Please check the path.")
+        print('  Please check the path.')
         return
-    params = input("  Params (opt): ") or None
-    is_active = input("  Is active? y/[n]: ")
-    is_active = True if is_active.lower() == "y" else False
-    is_input_correct = input("  Is input correct? Create this job? [y]/n: ")
-    if is_input_correct.lower() != "n":
+    params = input('  Params (opt): ') or None
+    is_active = input('  Is active? y/[n]: ')
+    is_active = True if is_active.lower() == 'y' else False
+    is_input_correct = input('  Is input correct? Create this job? [y]/n: ')
+    if is_input_correct.lower() != 'n':
         a.add_job(name, path, params, is_active)
-        print(f"  Job <{name}> was added.")
+        print(f'  Job <{name}> was added.')
 
 def cmd_save_jobs(a):
-    print("  Save jobs configuration to file in json format.")
-    name = input("  Enter file name: ")
+    print('  Save jobs configuration to file in json format.')
+    name = input('  Enter file name: ')
     if os.path.exists(name):
-        print("  (!) File with this name already exists. Please pick another name.")
+        print('  (!) File with this name already exists. Please pick another name.')
         return
     jobs_json = a.jobs_json()
-    with open(name, "wt") as f:
+    with open(name, 'wt') as f:
         json.dump(jobs_json, f, indent=4)
-    print(f"  File {name} was created.")
+    print(f'  File {name} was created.')
 
 def _load_jobs(a, cfg):
-    for _, job_cfg in cfg["jobs"].items():
+    for _, job_cfg in cfg['jobs'].items():
         a.load_job_from_json(job_cfg)
 
 def _load_jobs_from_file(a, name):
@@ -141,33 +142,33 @@ def _load_jobs_from_file(a, name):
     _load_jobs(a, cfg)
 
 def cmd_load_jobs_from_config(a):
-    fname = input("  Config file path: ")
+    fname = input('  Config file path: ')
     if not os.path.exists(fname):
-        print(f"  File {fname} doesn't exists.")
+        print(f'  File {fname} doesn\'t exists.')
         return
     _load_jobs_from_file(a, fname)
 
 def cmd_schedule_job(a: Assistant):
-    name = input("  Job name: ")
+    name = input('  Job name: ')
     if not name in a.jobs:
-        print(f"  Job <{name}> doesn't exists.")
+        print(f'  Job <{name}> doesn\'t exists.')
         return
-    t = input(f"  Time ({scheduler.TIME_FMT}): ")
+    t = input(f'  Time ({scheduler.TIME_FMT}): ')
     t = datetime.strptime(t, scheduler.TIME_FMT).time()
     _i_options = scheduler.Interval.list()
-    interval = input(f"  Interval ({_i_options}): ")
+    interval = input(f'  Interval ({_i_options}): ')
     if not interval in _i_options:
-        print(f"  Incorrect interval ({interval})")
+        print(f'  Incorrect interval ({interval})')
         return
     interval_arg = None
     if _a_options := scheduler._intervals[interval]:
-        interval_arg = input(f"  Interval argument ({_a_options}): ")
+        interval_arg = input(f'  Interval argument ({_a_options}): ')
         if not interval_arg in _a_options:
-            print(f"  Incorrect argument ({interval_arg})")
+            print(f'  Incorrect argument ({interval_arg})')
             return
     s = scheduler.Schedule(t, interval, interval_arg)
     a.reschedule_job(name, s)
-    print(f"  Job was rescheduled ({a.jobs[name].schedule_json()})")
+    print(f'  Job was rescheduled ({a.jobs[name].schedule_json()})')
 
 def commands():
     c = command.Commands()
@@ -208,9 +209,9 @@ def main():
         except SystemExit:
             os._exit(0)
         except:
-            print(f"Error: {sys.exc_info()[0]}. Trying to continue...")
+            print(f'Error: {sys.exc_info()[0]}. Trying to continue...')
             attempts_to_continue += 1
-    print("Exit due to many occurred exceptions.")
+    print('Exit due to many occurred exceptions.')
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

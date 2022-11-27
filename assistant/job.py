@@ -7,7 +7,7 @@ class Job:
     def __init__(self, name, path, params=None, is_active=False):
         self.name = name
         self.path = path
-        self.params: dict = params
+        self.params:str = params  # space separated
         self.is_active = is_active
         self.schedule = []
     def schedule_json(self):
@@ -18,10 +18,7 @@ class Job:
         return r
     def params_list(self):
         if self.params:
-            lst = []
-            for k, v in self.params.items():
-                lst.extend([str(k), str(v)])
-            return lst
+            return self.params.split(' ')
 
 def from_cfg(cfg_dict):
     c = cfg_dict

@@ -36,9 +36,9 @@ _jobs_cfg = {
         "test_job": {
             "name": "A",
             "path": "path",
-            "params": {
-                "whatever": 5
-            },
+            "params": [
+                "whatever=5"
+            ],
             "is_active": False,
             "schedule": [
                 {
@@ -61,7 +61,7 @@ def test_job_from_cfg():
     j = job.from_cfg(cfg)
     assert j.name == cfg["name"]
     assert j.path == cfg["path"]
-    assert j.params == {"whatever": 5}
+    assert j.params == ["whatever=5"]
     assert j.is_active == False
     assert len(j.schedule) == 2
     assert j.schedule[0].time_str() == "15:34:00"
@@ -72,9 +72,9 @@ def test_job_from_cfg():
 def test_make_cmd():
     j = job.Job("a", "some_path")
     assert assistant._make_cmd(j) == ["python", "some_path"]
-    j = job.Job("a", "path/to/file.py", params={"1": "one", "b": "is_be"})
+    j = job.Job("a", "path/to/file.py", params="one=1 two=2")
     assert assistant._make_cmd(j) == [
-        "python", "path/to/file.py", "1", "one", "b", "is_be"
+        "python", "path/to/file.py", "one=1", "two=2"
     ]
 
 def test_assistant_add_scheduled_jobs():
@@ -103,14 +103,14 @@ def test_job():
     j_default = job.Job(name="A", path="whatever")
     assert j_default.params==None
     assert j_default.is_active==False
-    j_with_params = job.Job("B", "path", params={"a": 4}, is_active=True)
+    j_with_params = job.Job("B", "path", params="a=4", is_active=True)
     assert j_with_params.name=="B"
     assert j_with_params.path=="path"
-    assert j_with_params.params=={"a": 4}
+    assert j_with_params.params=="a=4"
     assert j_with_params.is_active==True
 
 def test_job_json():
-    params = "{'a': 2}"
+    params = "a=2"
     j = job.Job("A", "path", params, is_active=False)
     assert j.json() == {
         "name": "A",
@@ -145,8 +145,8 @@ def test_job_with_schedule_json():
     }
 
 def test_job_params_list():
-    j = job.Job("a", "", params={"a": 1, "b": "bb"})
-    assert j.params_list() == ["a", "1", "b", "bb"]
+    j = job.Job("a", "", params="a=1 b=bb")
+    assert j.params_list() == ["a=1", "b=bb"]
 
 ### scheduler
 def test_schedule_daily():
